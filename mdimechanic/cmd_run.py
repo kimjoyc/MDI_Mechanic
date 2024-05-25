@@ -95,26 +95,46 @@ fi
 
     # Launch with docker-compose
     docker_env = os.environ
-    up_proc = subprocess.Popen( COMPOSE_COMMAND + ["up"],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                cwd=docker_path, env=docker_env )
-    up_tup = up_proc.communicate()
-    up_out = format_return(up_tup[0])
-    up_err = format_return(up_tup[1])
+    up_proc = subprocess.Popen(COMPOSE_COMMAND + ["up"],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               cwd=docker_path, env=docker_env, text=True)
+
+  # Print output in real-time
+    while up_proc.poll() is None:
+        line = up_proc.stdout.readline()
+        if line:
+            print(line, end='')  # Print each line as it's available
+
+    # Print remaining output
+    up_out, up_err = up_proc.communicate()
+    if up_out:
+        print(up_out)
+    if up_err:
+        print(up_err)
 
     # Run "docker-compose down"
-    down_proc = subprocess.Popen( COMPOSE_COMMAND + ["down"],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                  cwd=docker_path, env=docker_env )
-    down_tup = down_proc.communicate()
-    down_out = format_return(down_tup[0])
-    down_err = format_return(down_tup[1])
+    down_proc = subprocess.Popen(COMPOSE_COMMAND + ["down"],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 cwd=docker_path, env=docker_env, text=True)
+
+    # Print output in real-time
+    while down_proc.poll() is None:
+        line = down_proc.stdout.readline()
+        if line:
+            print(line, end='')  # Print each line as it's available
+
+    # Print remaining output
+    down_out, down_err = down_proc.communicate()
+    if down_out:
+        print(down_out)
+    if down_err:
+        print(down_err)
 
     if up_proc.returncode != 0:
-        docker_error( up_tup, "Driver test returned non-zero exit code." )
+        docker_error((up_out, up_err), "Driver test returned non-zero exit code.")
 
     elif down_proc.returncode != 0:
-        docker_error( down_tup, "Driver test returned non-zero exit code on docker down." )
+        docker_error((down_out, down_err), "Driver test returned non-zero exit code on docker down.")
 
     else:
         print("====================================================")
