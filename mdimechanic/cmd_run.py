@@ -90,35 +90,72 @@ fi
         os.makedirs(os.path.dirname(script_path), exist_ok=True)
         write_as_bytes(script, script_path)
 
+
     # Launch with docker-compose
     docker_env = os.environ
-    up_proc = subprocess.Popen(['unbuffer'] + COMPOSE_COMMAND + ["up"],
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               cwd=docker_path, env=docker_env, 
-                                encoding='utf-8')
+    def run_no_debug():
+        up_proc = subprocess.Popen( COMPOSE_COMMAND + ["up"],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    cwd=docker_path, env=docker_env )
+        up_tup = up_proc.communicate()
+        up_out = format_return(up_tup[0])
+        up_err = format_return(up_tup[1])
 
-    if debug:
+        # Run "docker-compose down"
+        down_proc = subprocess.Popen( COMPOSE_COMMAND + ["down"],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    cwd=docker_path, env=docker_env )
+        down_tup = down_proc.communicate()
+        down_out = format_return(down_tup[0])
+        down_err = format_return(down_tup[1])
+
+        if up_proc.returncode != 0:
+            docker_error( up_tup, "Driver test returned non-zero exit code." )
+
+        elif down_proc.returncode != 0:
+            docker_error( down_tup, "Driver test returned non-zero exit code on docker down." )
+
+        else:
+            print("====================================================")
+            print("================ Output from Docker ================")
+            print("====================================================")
+            print(up_out)
+            print("====================================================")
+            print("============== End Output from Docker ==============")
+            print("====================================================")
+
+
+    def run_w_debug():
+        up_proc = subprocess.Popen(['unbuffer'] + COMPOSE_COMMAND + ["up"],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           cwd=docker_path, env=docker_env,
+                           text=True, encoding='utf-8')
+
         # Print output in real-time
         while up_proc.poll() is None:
-            up_out_line = up_proc.stdout.readline()
-            up_err_line = up_proc.stderr.readline()
-            if up_out_line:
-                print(up_out_line, end='')
-            if up_err_line:
-                print(up_err_line, end='')
+            line = up_proc.stdout.readline()
+            if line:
+                print(line, end='')  
 
-    # Run "docker-compose down"
-    down_proc = subprocess.Popen(['unbuffer'] + COMPOSE_COMMAND + ["down"],
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                 cwd=docker_path, env=docker_env, 
-                                 encoding='utf-8')
+        # Run "docker-compose down"
+        down_proc = subprocess.Popen(['unbuffer'] + COMPOSE_COMMAND + ["down"],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    cwd=docker_path, env=docker_env,
+                                    text=True, encoding='utf-8')
 
-    if debug:
         # Print output in real-time
         while down_proc.poll() is None:
-            down_out_line = down_proc.stdout.readline()
-            down_err_line = down_proc.stderr.readline()
-            if down_out_line:
-                print(down_out_line, end='')
-            if down_err_line:
-                print(down_err_line, end='')
+            line = down_proc.stdout.readline()
+            if line:
+                print(line, end='') 
+
+
+    if debug:
+        run_w_debug()
+    
+    else:
+        run_no_debug()
+
+
+
+    
