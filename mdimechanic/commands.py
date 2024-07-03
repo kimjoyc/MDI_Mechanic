@@ -63,13 +63,15 @@ def command_run( args ):
     run_dir = os.getcwd()
     print("Running a custom calculation with MDI Mechanic.")
     script_name = args.pop("script_name")
+    debug = args.pop("debug", False)  
+
 
     if script_name is None:
         raise Exception("Error: --name argument was not provided.")
 
     # Test the driver
     try:
-        cmd_run.run( script_name, run_dir )
+        cmd_run.run( script_name, run_dir, debug=debug )
         print("Success: The driver ran to completion.")
     except:
         raise Exception("Error: The script did not complete successfully.")
