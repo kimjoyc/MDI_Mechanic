@@ -33,6 +33,9 @@ def parse_args():
                      type=str,
                      default=None,
                      help="Name of the script to run.")
+    
+    run.add_argument("--debug", action='store_true', help="Enable debug mode for real-time output")  
+
 
     rundriver = subparsers.add_parser("rundriver", help="Run a calculation with a test driver.")
     rundriver.add_argument("--name", dest='driver_name',
