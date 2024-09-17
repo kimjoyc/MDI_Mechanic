@@ -107,15 +107,15 @@ fi
     if debug:
         # Debug mode: Capture and print stdout and stderr in real-time
         for line in iter(up_proc.stdout.readline, b''):
-            print(format_return(line), end='')
+            print("standard output for docker-compose up:",format_return(line), end='')
         for line in iter(up_proc.stderr.readline, b''):
-            print(format_return(line), end='')
+            print("standard error for docker-compose up:" ,format_return(line), end='')
         
         # Debug mode: Capture and print stdout and stderr in real-time
         for line in iter(down_proc.stdout.readline, b''):
-            print(format_return(line), end='')
+            print("standard output for docker-compose down:",format_return(line), end='')
         for line in iter(down_proc.stderr.readline, b''):
-            print(format_return(line), end='')
+            print("standard error for docker-compose down:",format_return(line), end='')
 
     else:
         up_tup = up_proc.communicate()
