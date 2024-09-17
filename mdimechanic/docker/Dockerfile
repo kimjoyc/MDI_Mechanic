@@ -9,6 +9,7 @@ RUN apt-get update -y && \
         git \
         cmake \
         graphviz \
+	expect \
         && \
     apt-get clean && \
     apt-get purge && \

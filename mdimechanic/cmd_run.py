@@ -4,7 +4,7 @@ import shutil
 from .utils.utils import format_return, insert_list, docker_error, get_mdi_standard, get_compose_path, get_package_path, get_mdimechanic_yaml, write_as_bytes
 from .utils.determine_compose import COMPOSE_COMMAND
 
-def run( script_name, base_path ):
+def run( script_name, base_path , debug = False):
     mdimechanic_yaml = get_mdimechanic_yaml( base_path )
 
     # Get the path to the docker-compose file
@@ -98,29 +98,46 @@ fi
     up_proc = subprocess.Popen( COMPOSE_COMMAND + ["up"],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 cwd=docker_path, env=docker_env )
-    up_tup = up_proc.communicate()
-    up_out = format_return(up_tup[0])
-    up_err = format_return(up_tup[1])
 
-    # Run "docker-compose down"
+   # Run "docker-compose down"
     down_proc = subprocess.Popen( COMPOSE_COMMAND + ["down"],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                   cwd=docker_path, env=docker_env )
-    down_tup = down_proc.communicate()
-    down_out = format_return(down_tup[0])
-    down_err = format_return(down_tup[1])
 
-    if up_proc.returncode != 0:
-        docker_error( up_tup, "Driver test returned non-zero exit code." )
-
-    elif down_proc.returncode != 0:
-        docker_error( down_tup, "Driver test returned non-zero exit code on docker down." )
+    if debug:
+        # Debug mode: Capture and print stdout and stderr in real-time
+        for line in iter(up_proc.stdout.readline, b''):
+            print("standard output for docker-compose up:",format_return(line), end='')
+        for line in iter(up_proc.stderr.readline, b''):
+            print("standard error for docker-compose up:" ,format_return(line), end='')
+        
+        # Debug mode: Capture and print stdout and stderr in real-time
+        for line in iter(down_proc.stdout.readline, b''):
+            print("standard output for docker-compose down:",format_return(line), end='')
+        for line in iter(down_proc.stderr.readline, b''):
+            print("standard error for docker-compose down:",format_return(line), end='')
 
     else:
-        print("====================================================")
-        print("================ Output from Docker ================")
-        print("====================================================")
-        print(up_out)
-        print("====================================================")
-        print("============== End Output from Docker ==============")
-        print("====================================================")
+        up_tup = up_proc.communicate()
+        up_out = format_return(up_tup[0])
+        up_err = format_return(up_tup[1])
+    
+     
+        down_tup = down_proc.communicate()
+        down_out = format_return(down_tup[0])
+        down_err = format_return(down_tup[1])
+
+        if up_proc.returncode != 0:
+            docker_error( up_tup, "Driver test returned non-zero exit code." )
+    
+        elif down_proc.returncode != 0:
+            docker_error( down_tup, "Driver test returned non-zero exit code on docker down." )
+    
+        else:
+            print("====================================================")
+            print("================ Output from Docker ================")
+            print("====================================================")
+            print(up_out)
+            print("====================================================")
+            print("============== End Output from Docker ==============")
+            print("====================================================")
